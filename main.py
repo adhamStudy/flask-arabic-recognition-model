@@ -23,34 +23,34 @@ def preprocess_image_for_cnn(image_stream, image_size=(32, 32)):
     return img
 
 labels = {
-    0: 'ع',  # ain
-    1: 'ا',  # alef
-    2: 'ب',  # beh
-    3: 'ض',  # dad
-    4: 'د',  # dal
-    5: 'ظ',  # dhad
-    6: 'ف',  # feh
-    7: 'غ',  # ghain
-    8: 'ح',  # hah
-    9: 'ه',  # heh
-    10: 'ج',  # jeem
-    11: 'ك',  # kaf
-    12: 'خ',  # khah
-    13: 'ل',  # lam
-    14: 'م',  # meem
-    15: 'ن',  # noon
-    16: 'ق',  # qaf
-    17: 'ر',  # reh
-    18: 'ص',  # sad
-    19: 'س',  # seen
-    20: 'ش',  # sheen
-    21: 'ط',  # tah
-    22: 'ت',  # teh
-    23: 'ذ',  # thal
-    24: 'ث',  # theh
-    25: 'و',  # waw
-    26: 'ي',  # yeh
-    27: 'ز'   # zain
+    0: 'عين',  # ain
+    1: 'ألف',  # alef
+    2: 'باء',  # beh
+    3: 'ضاد',  # dad
+    4: 'دال',  # dal
+    5: 'ظاء',  # dhad
+    6: 'فاء',  # feh
+    7: 'غين',  # ghain
+    8: 'حاء',  # hah
+    9: 'هاء',  # heh
+    10: 'جيم',  # jeem
+    11: 'كاف',  # kaf
+    12: 'خاء',  # khah
+    13: 'لام',  # lam
+    14: 'ميم',  # meem
+    15: 'نون',  # noon
+    16: 'قاف',  # qaf
+    17: 'راء',  # reh
+    18: 'صاد',  # sad
+    19: 'سين',  # seen
+    20: 'شين',  # sheen
+    21: 'طاء',  # tah
+    22: 'تاء',  # teh
+    23: 'ذال',  # thal
+    24: 'ثاء',  # theh
+    25: 'واو',  # waw
+    26: 'ياء',  # yeh
+    27: 'زاي'   # zain
 }
 
 @app.route('/predictImage', methods=['POST'])
@@ -70,10 +70,9 @@ def predictImage():
         # Get the top 2 predictions
         top_2_indices = np.argsort(pred[0])[-2:][::-1]  # Indices of top 2 predictions
         top_2_labels = [labels[i] for i in top_2_indices]  # Corresponding labels
-        top_2_probabilities = [float(pred[0][i]) for i in top_2_indices]  # Corresponding probabilities
 
         # Format the top 2 predictions as a single string separated by a comma
-        predictions_string = f"{top_2_labels[0]} ({top_2_probabilities[0]:.4f}), {top_2_labels[1]} ({top_2_probabilities[1]:.4f})"
+        predictions_string = ", ".join(top_2_labels)
 
         return jsonify({
             "success": True,
