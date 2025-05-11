@@ -108,6 +108,34 @@ def predictImage():
 def predictImage1():
     return jsonify({"success": True, "prediction": "ميم, نون"})
 
+@app.route('/predictImage2', methods=['POST'])
+def predictImage2():
+    try:
+        print("📥 Received request in /predictImage2")
+        if 'image' not in request.files:
+            return jsonify({"success": False, "error": "No image file provided"}), 400
+
+        file = request.files['image']
+        image = Image.open(file.stream).convert('L')  # تحويل للصورة الرمادية
+        image = image.resize((32, 32))  # تغيير الحجم
+
+        img_array = np.array(image)
+        print(f"✅ Image shape: {img_array.shape}")
+
+        # تحويل جزء من المصفوفة إلى قائمة (مثلاً أول 5 أسطر فقط لتجنب الضخامة)
+        preview = img_array[:5].tolist()
+
+        return jsonify({
+            "success": True,
+            "shape": img_array.shape,
+            "preview": preview  # عرض جزء من المصفوفة
+        })
+
+    except Exception as e:
+        print(f"❌ Error in /predictImage2: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Read port from Render
