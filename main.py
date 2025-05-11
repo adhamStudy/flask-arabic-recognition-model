@@ -59,35 +59,33 @@ labels = {
 
 @app.route('/predictImage', methods=['POST'])
 def predictImage():
-    try:
+   try:
         print("📥 Received request")
-        start = time.time()
-
         if 'image' not in request.files:
             print("❌ No image file provided")
             return jsonify({"success": False, "error": "No image file provided"}), 400
 
         file = request.files['image']
-
-        # معالجة الصورة بشكل أسرع
-        image = Image.open(file.stream).convert('L').resize(image_size, resample=Image.BILINEAR)
-        img_array = np.asarray(image, dtype=np.uint8)
-
-        # تقليل التفاصيل (اختياري لتسريع المعالجة)
-        img_array = cv2.medianBlur(img_array, 3)
+        image = Image.open(file.stream).convert('L')  # تحويل إلى grayscale
+        image = image.resize(image_size)
+        img_array = np.array(image)
         img_array = cv2.bitwise_not(img_array)
         img_array = img_array.astype('float32') / 255.0
-        img_array = np.expand_dims(img_array, axis=(0, -1))
+        img_array = np.expand_dims(img_array, axis=(0, -1))  # إضافة بعدين
 
-        # التنبؤ
-        print("⏳ Predicting...")
-        predictions = model.predict(img_array)
-        print(f"✅ Prediction done in {time.time() - start:.2f} sec")
+        print("✅ Image processed, predicting...")
+
+        try:
+            predictions = model.predict(img_array)
+        except Exception as model_error:
+            print(f"❌ Model prediction failed: {model_error}")
+            return jsonify({"success": False, "error": "Model prediction failed"}), 500
 
         top_2_indices = np.argsort(predictions[0])[-2:][::-1]
         top_2_labels = [labels[i] for i in top_2_indices]
         predictions_string = ", ".join(top_2_labels)
 
+        print(f"✅ Prediction complete: {predictions_string}")
         return jsonify({"success": True, "prediction": predictions_string})
 
     except Exception as e:
