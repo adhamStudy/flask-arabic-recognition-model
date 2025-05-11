@@ -4,6 +4,8 @@ from PIL import Image
 import cv2
 import numpy as np
 import tensorflow as tf
+import time
+
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
