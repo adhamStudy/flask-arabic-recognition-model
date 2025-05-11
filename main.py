@@ -69,38 +69,31 @@ def predictImage():
 
         file = request.files['image']
 
-        # تحويل الصورة إلى grayscale
-        image = Image.open(file.stream).convert('L')
-        print(f"⏱️ PIL open & convert took: {time.time() - start:.2f} sec")
+        # معالجة الصورة بشكل أسرع
+        image = Image.open(file.stream).convert('L').resize(image_size, resample=Image.BILINEAR)
+        img_array = np.asarray(image, dtype=np.uint8)
 
-        # تغيير الحجم والمعالجة المسبقة
-        image = image.resize(image_size)
-        img_array = np.array(image)
+        # تقليل التفاصيل (اختياري لتسريع المعالجة)
+        img_array = cv2.medianBlur(img_array, 3)
         img_array = cv2.bitwise_not(img_array)
         img_array = img_array.astype('float32') / 255.0
         img_array = np.expand_dims(img_array, axis=(0, -1))
-        print(f"⏱️ Preprocessing took: {time.time() - start:.2f} sec")
 
-        # توقع النموذج
-        predict_start = time.time()
+        # التنبؤ
+        print("⏳ Predicting...")
         predictions = model.predict(img_array)
-        predict_time = time.time() - predict_start
-        print(f"⏱️ model.predict() took: {predict_time:.2f} sec")
+        print(f"✅ Prediction done in {time.time() - start:.2f} sec")
 
-        # استخراج أفضل التوقعات
         top_2_indices = np.argsort(predictions[0])[-2:][::-1]
         top_2_labels = [labels[i] for i in top_2_indices]
         predictions_string = ", ".join(top_2_labels)
-
-        total = time.time() - start
-        print(f"✅ Total prediction time: {total:.2f} sec")
-        print(f"✅ Prediction result: {predictions_string}")
 
         return jsonify({"success": True, "prediction": predictions_string})
 
     except Exception as e:
         print(f"❌ General error: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 
