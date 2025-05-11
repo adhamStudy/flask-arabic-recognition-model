@@ -59,36 +59,47 @@ labels = {
 def predictImage():
     try:
         print("📥 Received request")
+        start = time.time()
+
         if 'image' not in request.files:
             print("❌ No image file provided")
             return jsonify({"success": False, "error": "No image file provided"}), 400
 
         file = request.files['image']
-        image = Image.open(file.stream).convert('L')  # تحويل إلى grayscale
+
+        # تحويل الصورة إلى grayscale
+        image = Image.open(file.stream).convert('L')
+        print(f"⏱️ PIL open & convert took: {time.time() - start:.2f} sec")
+
+        # تغيير الحجم والمعالجة المسبقة
         image = image.resize(image_size)
         img_array = np.array(image)
         img_array = cv2.bitwise_not(img_array)
         img_array = img_array.astype('float32') / 255.0
-        img_array = np.expand_dims(img_array, axis=(0, -1))  # إضافة بعدين
+        img_array = np.expand_dims(img_array, axis=(0, -1))
+        print(f"⏱️ Preprocessing took: {time.time() - start:.2f} sec")
 
-        print("✅ Image processed, predicting...")
+        # توقع النموذج
+        predict_start = time.time()
+        predictions = model.predict(img_array)
+        predict_time = time.time() - predict_start
+        print(f"⏱️ model.predict() took: {predict_time:.2f} sec")
 
-        try:
-            predictions = model.predict(img_array)
-        except Exception as model_error:
-            print(f"❌ Model prediction failed: {model_error}")
-            return jsonify({"success": False, "error": "Model prediction failed"}), 500
-
+        # استخراج أفضل التوقعات
         top_2_indices = np.argsort(predictions[0])[-2:][::-1]
         top_2_labels = [labels[i] for i in top_2_indices]
         predictions_string = ", ".join(top_2_labels)
 
-        print(f"✅ Prediction complete: {predictions_string}")
+        total = time.time() - start
+        print(f"✅ Total prediction time: {total:.2f} sec")
+        print(f"✅ Prediction result: {predictions_string}")
+
         return jsonify({"success": True, "prediction": predictions_string})
 
     except Exception as e:
         print(f"❌ General error: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 @app.route('/predictImage1', methods=['POST'])
