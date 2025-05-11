@@ -7,10 +7,9 @@ import tensorflow as tf
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-model = None 
+
 # Load the model
 model = tf.keras.models.load_model('ClassicCNN_v1_28_0.914.keras')
-
 image_size = (32, 32)
 
 def preprocess_image_for_cnn(image_stream, image_size=(32, 32)):
@@ -56,7 +55,7 @@ labels = {
 
 @app.route('/predictImage', methods=['POST'])
 def predictImage():
-    
+    try:
         if 'image' not in request.files:
             return jsonify({
                 "success": False,
