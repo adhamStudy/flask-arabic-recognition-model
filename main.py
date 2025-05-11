@@ -85,6 +85,9 @@ def predictImage():
             "error": str(e)
         }), 500
 
+@app.route('/predictImage1', methods=['POST'])
+def predictImage1():
+    return jsonify({"success": True, "prediction": "ميم, نون"})
 
 
 if __name__ == "__main__":
