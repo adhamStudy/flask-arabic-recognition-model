@@ -56,34 +56,38 @@ labels = {
 @app.route('/predictImage', methods=['POST'])
 def predictImage():
     try:
+        print("📥 Received request")
         if 'image' not in request.files:
-            return jsonify({
-                "success": False,
-                "error": "No image file provided"
-            }), 400
+            print("❌ No image file provided")
+            return jsonify({"success": False, "error": "No image file provided"}), 400
 
         file = request.files['image']
-        image = Image.open(file.stream)
-        processed_image = preprocess_image_for_cnn(image)
-        pred = model.predict(processed_image)
-        
-        # Get the top 2 predictions
-        top_2_indices = np.argsort(pred[0])[-2:][::-1]  # Indices of top 2 predictions
-        top_2_labels = [labels[i] for i in top_2_indices]  # Corresponding labels
+        image = Image.open(file.stream).convert('L')  # تحويل إلى grayscale
+        image = image.resize(image_size)
+        img_array = np.array(image)
+        img_array = cv2.bitwise_not(img_array)
+        img_array = img_array.astype('float32') / 255.0
+        img_array = np.expand_dims(img_array, axis=(0, -1))  # إضافة بعدين
 
-        # Format the top 2 predictions as a single string separated by a comma
+        print("✅ Image processed, predicting...")
+
+        try:
+            predictions = model.predict(img_array)
+        except Exception as model_error:
+            print(f"❌ Model prediction failed: {model_error}")
+            return jsonify({"success": False, "error": "Model prediction failed"}), 500
+
+        top_2_indices = np.argsort(predictions[0])[-2:][::-1]
+        top_2_labels = [labels[i] for i in top_2_indices]
         predictions_string = ", ".join(top_2_labels)
 
-        return jsonify({
-            "success": True,
-            "prediction": predictions_string  # Ensure the key is "prediction"
-        })
+        print(f"✅ Prediction complete: {predictions_string}")
+        return jsonify({"success": True, "prediction": predictions_string})
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+        print(f"❌ General error: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 @app.route('/predictImage1', methods=['POST'])
 def predictImage1():
